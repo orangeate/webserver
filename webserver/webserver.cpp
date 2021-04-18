@@ -1,7 +1,9 @@
 #include "webserver.h"
 
 WebServer::WebServer(const Config& config) 
-    : epoll_(Epoll::GetInstance()), p_thread_pool(new ThreadPool<HttpConn>(config.thread_num, config.max_requests))
+    : epoll_(Epoll::GetInstance()), 
+    timer_(new HeapTimer()),
+    p_thread_pool(new ThreadPool<HttpConn>(config.thread_num, config.max_requests))
 {
     is_close_ = false;
     
@@ -13,7 +15,7 @@ WebServer::WebServer(const Config& config)
     HttpConn::user_count = 0;
     HttpConn::root_dir_ = root_dir_;
 
-    init(config.potr, 3,
+    init(config.potr, 3, config.timeout_ms,
     3306, config.db_user, config.db_pwd, config.db_name,
     config.sql_num, config.thread_num, 
     config.open_log, config.log_level, config.log_queue_capacity);
@@ -21,7 +23,7 @@ WebServer::WebServer(const Config& config)
 
 WebServer::~WebServer(){}
 
-void WebServer::init(int port , int actor_model,
+void WebServer::init(int port , int actor_model, int timeout_ms,
               int db_port, string db_user, string db_pwd, string db_name,
               int sql_num, int thread_num, 
               bool open_log, int log_level, int log_queue_capacity)
@@ -32,7 +34,6 @@ void WebServer::init(int port , int actor_model,
     
     // 初始化事件的模式
     init_event_mode(actor_model);
-
     
     // 日志
     if(open_log)
@@ -153,8 +154,11 @@ void WebServer::run()
         { LOG_INFO("========== Server start =========="); }
 
     while (!is_close_)
-    {     
-        int event_nums = epoll_->wait(time_ms);
+    {
+        if(timeout_ms_ > 0) 
+            time_ms = timer_->get_bext_tick();
+
+        int event_nums = epoll_->wait(time_ms);  
         
         for(int i = 0; i < event_nums; i++)
         {
@@ -205,19 +209,29 @@ void WebServer::deal_listen()
 void WebServer::deal_read(HttpConn* client) 
 {
     assert(client);
+    extent_time(client);
     p_thread_pool->append(client, 0);                   // 添加到消息队列
 }
 
 void WebServer::deal_write(HttpConn* client) 
 {
     assert(client);
+    extent_time(client);
     p_thread_pool->append(client, 1);                   // 添加到消息队列
 }
 
 void WebServer::add_client(int fd, sockaddr_in addr) 
 {
-    epoll_->add_fd(fd, conn_event_ | EPOLLIN);          // 监听读事件
+    assert(fd > 0);
     users_[fd].init(fd, conn_event_ ,addr);
+
+    if(timeout_ms_ > 0) 
+    {
+        timer_->push(fd, timeout_ms_, std::bind(&WebServer::close_conn, this, &users_[fd]));
+    }
+
+
+    epoll_->add_fd(fd, conn_event_ | EPOLLIN);          // 监听读事件
     set_nonblock(fd);                                   // 设置非阻塞
 
     LOG_INFO("Client[%d] in!", users_[fd].get_fd());
@@ -230,5 +244,11 @@ void WebServer::close_conn(HttpConn* client)
 
     epoll_->del_fd(client->get_fd());
     client->close_();
+}
+
+void WebServer::extent_time(HttpConn* client) 
+{
+    assert(client);
+    if(timeout_ms_ > 0) { timer_->adjust(client->get_fd(), timeout_ms_); }
 }
 
