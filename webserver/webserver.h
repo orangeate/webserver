@@ -15,6 +15,7 @@
 #include "../epoll/epoll.h"
 #include "../config/config.h"
 #include "../log/log.h"
+#include "../time/heap_timer.h"
 
 using namespace std;
 
@@ -33,7 +34,7 @@ public:
     void run();
 
 private:
-    void init(int port , int actor_model,
+    void init(int port , int actor_model, int timeout_ms,
               int db_port, string db_user, string db_pwd, string db_name,
               int sql_num, int thread_num, 
               bool open_log, int log_level, int log_queue_capacity);
@@ -53,19 +54,23 @@ private:
     void send_error(int fd, const char*info);
     void close_conn(HttpConn* client);
 
+    void extent_time(HttpConn* client);
+
 private:
     int port_;              // 端口号
     int listenfd_;          // 监听文件描述符
     bool is_close_;         // 是否关闭
     int actor_model_;       // 并发模式   
     int thread_num_;        // 线程池数量
+    int timeout_ms_;        // 超时时间
     string root_dir_;       // 资源根目录 
 
     uint32_t listen_event_; // 监听的文件描述符事件
     uint32_t conn_event_;   // 连接的文件描述符事件
 
     Epoll* epoll_;
-    std::unique_ptr<ThreadPool<HttpConn>> p_thread_pool;
-    std::unordered_map<int, HttpConn> users_;               //  连接的信息 fd -> httpconn
 
+    std::unique_ptr<HeapTimer> timer_;                      // 定时器
+    std::unique_ptr<ThreadPool<HttpConn>> p_thread_pool;    // 线程池
+    std::unordered_map<int, HttpConn> users_;               // 连接的信息 fd -> httpconn
 };

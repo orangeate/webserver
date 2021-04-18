@@ -27,5 +27,8 @@ public:
     string db_user;
     string db_pwd;
     string db_name;
+
+    // time
+    int timeout_ms;
 };
 #endif //CONFIG_H
