@@ -8,7 +8,8 @@
 #include "../lock/lock.h"
 
 template<class T>
-class BlockDeque {
+class BlockDeque 
+{
 public:
     explicit BlockDeque(size_t capacity = 1000);
 
@@ -117,7 +118,9 @@ size_t BlockDeque<T>::size()
 template<class T>
 size_t BlockDeque<T>::capacity()
 {
+    mutex_.lock();
     return capacity_;
+    mutex_.unlock();
 }
 
 template<class T>
@@ -128,10 +131,10 @@ void BlockDeque<T>::push_back(const T &item)
     {
         cond_producer_.wait(mutex_.get());
     }
-    mutex_.unlock();
-
+    
     deque_.push_back(item);
-    cond_consumer_.signal();
+    mutex_.unlock();
+    cond_consumer_.signal(); 
 }
 
 template<class T>
@@ -142,9 +145,9 @@ void BlockDeque<T>::push_front(const T &item)
     {
         cond_producer_.wait(mutex_.get());
     }
-    mutex_.unlock();
-
+    
     deque_.push_front(item);
+    mutex_.unlock();
     cond_consumer_.signal();
 }
 
@@ -185,8 +188,7 @@ bool BlockDeque<T>::pop(T &item)
     deque_.pop_front();
 
     mutex_.unlock();
-
-
+    
     cond_producer_.signal();
 
     return true;

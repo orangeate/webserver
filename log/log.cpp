@@ -22,10 +22,11 @@ Log::~Log()
     }
     if(fp_) 
     {
-        mutex_.lock();
+        std::lock_guard<std::mutex> locker(mtx_);
+        //mutex_.lock();
         flush();
         fclose(fp_);
-        mutex_.unlock();
+        //mutex_.unlock();
     }
 }
 
@@ -72,7 +73,9 @@ void Log::init(int level, const char* path, const char* suffix, int capacity)
             path_, t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, suffix_);
     day_ = t.tm_mday;
 
-    mutex_.lock();
+    //mutex_.lock();
+    {
+        std::lock_guard<std::mutex> locker(mtx_);
     buff_.retrieve_all();
     if(fp_) 
     { 
@@ -87,7 +90,8 @@ void Log::init(int level, const char* path, const char* suffix, int capacity)
         fp_ = fopen(file_name, "a");
     } 
     assert(fp_ != nullptr);
-    mutex_.unlock();
+    }
+    //mutex_.unlock();
 }
 
 void Log::async_write() 
@@ -95,9 +99,10 @@ void Log::async_write()
     std::string str = "";
     while(deque_->pop(str)) 
     {
-        mutex_.lock();
+        std::lock_guard<std::mutex> locker(mtx_);
+        //mutex_.lock();
         fputs(str.c_str(), fp_);
-        mutex_.unlock();
+        //mutex_.unlock();
     }
 }
 
@@ -113,9 +118,10 @@ int Log::get_level()
 
 void Log::set_level(int level) 
 {
-    mutex_.lock();
+    std::lock_guard<std::mutex> locker(mtx_);
+    //mutex_.lock();
     level_ = level;
-    mutex_.unlock();
+    //mutex_.unlock();
 }
 
 void Log::flush() 
@@ -140,7 +146,9 @@ void Log::write(int level, const char *format, ...)
     /* 日志日期 日志行数 */
     if (day_ != t.tm_mday || (line_count_ && (line_count_  %  MAX_LINES == 0)))
     {
-        mutex_.lock();
+        // mutex_.lock();
+        std::unique_lock<std::mutex> locker(mtx_);
+        locker.unlock();
         
         char new_file[LOG_NAME_LEN];
         char tail[36] = {0};
@@ -157,7 +165,8 @@ void Log::write(int level, const char *format, ...)
             snprintf(new_file, LOG_NAME_LEN - 72, "%s/%s-%d%s", path_, tail, (line_count_  / MAX_LINES), suffix_);
         }
         
-        mutex_.unlock();
+        //mutex_.unlock();
+        locker.lock();
 
         flush();
         fclose(fp_);
@@ -166,7 +175,9 @@ void Log::write(int level, const char *format, ...)
         assert(fp_ != nullptr);
     }
 
-    mutex_.lock();
+    //mutex_.lock();
+    {
+    std::unique_lock<std::mutex> locker(mtx_);
     line_count_++;
     int n = snprintf(buff_.begin_write(), 128, "%d-%02d-%02d %02d:%02d:%02d.%06ld ",
                     t.tm_year + 1900, t.tm_mon + 1, t.tm_mday,
@@ -191,7 +202,8 @@ void Log::write(int level, const char *format, ...)
         fputs(buff_.begin_read_const(), fp_);
     }
     buff_.retrieve_all();
-    mutex_.unlock();
+    }
+    //mutex_.unlock();
 }
 
 void Log::append_log_level_title_(int level)

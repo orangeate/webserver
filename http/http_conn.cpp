@@ -54,7 +54,6 @@ int HttpConn::get_port() const
     return addr_.sin_port;
 }
 
-
 bool HttpConn::process()
 {
     request_.init();

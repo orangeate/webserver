@@ -156,7 +156,7 @@ void WebServer::run()
     while (!is_close_)
     {
         if(timeout_ms_ > 0) 
-            time_ms = timer_->get_bext_tick();
+            time_ms = timer_->get_next_tick();
 
         int event_nums = epoll_->wait(time_ms);  
         

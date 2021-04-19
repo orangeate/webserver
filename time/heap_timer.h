@@ -47,12 +47,12 @@ public:
     void do_work(int id);
 
     void tick();    
-    int get_bext_tick();
+    int get_next_tick();
 
 
 private:
     void swap_node_(size_t i, size_t j);
-    void sift_up_(size_t i);
+    bool sift_up_(size_t index);
     bool sift_down_(size_t index, size_t n);
     void delete_(size_t i);
     

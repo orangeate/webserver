@@ -60,7 +60,8 @@ private:
     std::unique_ptr<BlockDeque<std::string>> deque_; 
     std::unique_ptr<std::thread> write_thread_;
 
-    Mutex mutex_;
+    // Mutex mutex_;
+    std::mutex mtx_;
 };
 
 #define LOG_BASE(level, format, ...) \
