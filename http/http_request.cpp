@@ -41,7 +41,6 @@ bool HttpRequest::is_keep_alive() const
     return false;
 }
 
-// 解析请求首行
 bool HttpRequest::parse_request_line(const std::string& line) {
     // GET / HTTP/1.1
     std::regex patten("^([^ ]*) ([^ ]*) HTTP/([^ ]*)$");
@@ -59,7 +58,6 @@ bool HttpRequest::parse_request_line(const std::string& line) {
     return false;
 }
 
-// 解析请求头
 void HttpRequest::parse_header(const std::string& line)
 {
     std::regex patten("^([^:]*): ?(.*)$");
@@ -73,7 +71,6 @@ void HttpRequest::parse_header(const std::string& line)
     parse_path();
 }
 
-// 解析请求体
 void HttpRequest::parse_body(const std::string& line)
 {
     body_ = line;

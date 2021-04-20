@@ -60,7 +60,7 @@ private:
     int port_;              // 端口号
     int listenfd_;          // 监听文件描述符
     bool is_close_;         // 是否关闭
-    int actor_model_;       // 并发模式   
+    int model;              // 事件模式   
     int thread_num_;        // 线程池数量
     int timeout_ms_;        // 超时时间
     string root_dir_;       // 资源根目录 

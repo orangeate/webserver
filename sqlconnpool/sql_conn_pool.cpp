@@ -11,7 +11,6 @@ Connection_pool *Connection_pool::GetInstance()
 	return &connPool;
 }
 
-/* 初始化，创建连接池 */
 void Connection_pool::init(string url, int port, string user, 
     string pwd, string db_name, int max_conn)
 {
@@ -47,7 +46,6 @@ void Connection_pool::init(string url, int port, string user,
 	}
 }
 
-/* 获取数据库连接 */
 MYSQL *Connection_pool::get_mysql_connection()
 {
 	MYSQL *con = NULL;
@@ -69,7 +67,6 @@ MYSQL *Connection_pool::get_mysql_connection()
 	return con;
 }
 
-/* 释放数据库连接 */
 bool Connection_pool::release_connection(MYSQL *con)
 {
     if (con == nullptr)
@@ -87,7 +84,6 @@ bool Connection_pool::release_connection(MYSQL *con)
 	return true;
 }
 
-//销毁数据库连接池
 void Connection_pool::destroy_pool()
 {
 	lock_.lock();
@@ -108,7 +104,6 @@ void Connection_pool::destroy_pool()
 	lock_.unlock();
 }
 
-/* 当前连接个数 */
 int Connection_pool::cur_nums()
 {
 	return this->used_conn_nums_;

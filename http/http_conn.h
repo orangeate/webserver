@@ -36,7 +36,7 @@ public:
    
     static bool is_et_;
     static std::string root_dir_;
-    static std::atomic<int> user_count;     // 连接数
+    static std::atomic<int> user_count; 
 
     int state_;
 
@@ -47,7 +47,7 @@ private:
     int fd_;
     struct  sockaddr_in addr_;
 
-    uint32_t conn_event_;                   // 连接的文件描述符事件
+    uint32_t conn_event_;
     Epoll* epoll_;
     
     bool is_close_;

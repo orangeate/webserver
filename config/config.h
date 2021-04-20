@@ -10,16 +10,16 @@ public:
     Config();
     ~Config(){};
 
-    void parse_arg(int argc, char*argv[]);
+    void parse_args(int argc, char*argv[]);
 
     int potr;
     int sql_num;
     int thread_num;
-    int actor_model;
+    int model;
     int max_requests;
 
     // log
-    bool open_log;
+    int open_log;
     int log_level;
     int log_queue_capacity;
 

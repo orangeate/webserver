@@ -23,17 +23,17 @@ WebServer::WebServer(const Config& config)
 
 WebServer::~WebServer(){}
 
-void WebServer::init(int port , int actor_model, int timeout_ms,
+void WebServer::init(int port , int model, int timeout_ms,
               int db_port, string db_user, string db_pwd, string db_name,
               int sql_num, int thread_num, 
               bool open_log, int log_level, int log_queue_capacity)
 {
     this->port_ = port;
-    this->actor_model_ = actor_model;
+    this->model = model;
     this->thread_num_ = thread_num;
     
     // 初始化事件的模式
-    init_event_mode(actor_model);
+    init_event_mode(model);
     
     // 日志
     if(open_log)
